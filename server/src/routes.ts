@@ -7,7 +7,8 @@ import { Express } from 'express';
 export const startRoutes = (app: Express) => {
     app.get('/api/messages', async (request, response) => {
         try {
-            const messages = await MessageModel.findAll();
+            const roomNumber = request.query.room as string;
+            const messages = await MessageModel.findAll({ where: { room: roomNumber } });
             response.send({ messages });
         } catch (error) {
             console.error('Error fetching messages:', error);
@@ -15,5 +16,5 @@ export const startRoutes = (app: Express) => {
         }
     });
 
-    // Define other routes as needed
+
 };

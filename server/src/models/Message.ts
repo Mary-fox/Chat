@@ -12,6 +12,10 @@ MessageModel.init({
         type: DataTypes.STRING,
         allowNull: false,
     },
+    room: {
+        type: DataTypes.STRING, 
+        allowNull: true,
+    },
 }, {
     sequelize,
     modelName: 'Message',

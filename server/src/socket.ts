@@ -18,23 +18,36 @@ export const startSocketServer = (io: socketio.Server) => {
 
             // Присвоение значения sessionUsername при новом входе пользователя
             (socket as any).sessionUsername = user.username;
+
+            // Отправка системного сообщения о входе нового пользователя
+            io.emit('system message', { content: `${user.username} joined the chat`, author: 'Admin' });
+        });
+        
+        socket.on('join room', (room: string, username:string) => {
+            socket.join(room);
+            console.log(`User  ${username} joined room ${room}`);
         });
 
+        // Disconnect
+        socket.on('disconnect', () => {
+            console.log(`User disconnected: ${(socket as any).sessionUsername} left the chat`);
+            // Отправка системного сообщения о выходе пользователя
+            io.emit('system message', { content: `${(socket as any).sessionUsername} left the chat`, author: 'Admin' });
+        });
 // Send Message
-socket.on('send message', async (message: any) => {
-    console.log(`Message: ${message.author}: ${message.content}`);
+socket.on('send message', async (data: any) => {
+    const { author, content, room } = data; // Добавляем room
 
     try {
-        // Сохранение сообщения в базе данных
         const newMessage = await MessageModel.create({
-            author: message.author,
-            content: message.content,
+            author: data.author,
+            content: data.content,
+            room: data.room, // Сохраняем информацию о комнате
             createdAt: new Date(),
-            updatedAt: new Date() 
+            updatedAt: new Date(),
         });
 
-        // Отправка сообщения всем подключенным клиентам, включая отправителя
-        io.emit('message received', newMessage);
+        io.to(room).emit('message received', newMessage); // Отправляем сообщение всем участникам комнаты
 
         console.log('Message saved in the database:', newMessage);
     } catch (error) {
