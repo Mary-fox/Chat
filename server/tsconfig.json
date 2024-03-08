@@ -1,0 +1,26 @@
+// {
+//   "compilerOptions": {
+//     "target": "es2016",
+//     "module": "commonjs",
+//     "esModuleInterop": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "strict": true,
+//     "skipLibCheck": true
+//   }
+// }
+
+
+{
+  "compilerOptions": {
+    "baseUrl": ".", // Указывает, что корневой каталог для определения путей начинается с текущей рабочей директории
+    "paths": {
+      "*": ["src/*"] // Указывает, что все модули должны быть найдены в папке "src"
+    },
+    "target": "es2016",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Mary-fox/Chat.git",
+  "author": "Mary-fox <Mary-fox2008@yandex.ru>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "nanoid": "^5.0.6",
+    "socket.io": "^4.7.4"
+  },
+  "scripts": {
+    "server": "yarn --cwd server dev",
+    "client": "yarn --cwd client start",
+    "start": "concurrently \"yarn server\" \"yarn client\""
+  }
+}
