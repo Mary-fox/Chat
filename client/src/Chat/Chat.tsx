@@ -16,12 +16,21 @@ import {
   SendBtnContainer,
 } from "./Chat.styled";
 
+interface Message {
+  id: number;
+  author: string;
+  content: string;
+  room: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const Chat: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState<boolean>(false);
   const [username, setUsername] = useState<string>(localStorage.getItem("username") || "");
   const [message, setMessage] = useState<string>("");
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [room, setRoom] = useState<string>("");
   const [loadedFromDB, setLoadedFromDB] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -39,7 +48,7 @@ const Chat: React.FC = () => {
       setConnected(false);
     });
 
-    newSocket.on("message received", (newMessage: any) => {
+    newSocket.on("message received", (newMessage: Message) => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
@@ -51,11 +60,11 @@ const Chat: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (room.trim() !== "" && !loadedFromDB) {
+    if (messages.length === 0 && room.trim() !== "" && !loadedFromDB) {
       fetch(`http://localhost:8001/api/messages?room=${room}`)
         .then((response) => response.json())
         .then((data) => {
-          setMessages(data.messages);
+          setMessages(data);
           setLoadedFromDB(true);
         })
         .catch((error) => console.error("Error fetching messages:", error));
@@ -67,40 +76,18 @@ const Chat: React.FC = () => {
       setUsername(username);
       setRoom(roomName);
 
-      if (!socket || !socket.connected) {
-        const newSocket = io("http://localhost:8001");
-
-        newSocket.on("connect", () => {
-          console.log("Connected to server");
-          setConnected(true);
-        });
-
-        newSocket.on("disconnect", () => {
-          console.log("Disconnected from server");
-          setConnected(false);
-        });
-
-        newSocket.on("message received", (newMessage: any) => {
-          setMessages((prevMessages) => [...prevMessages, newMessage]);
-        });
-
-        setSocket(newSocket);
-      }
-
       socket?.emit("new login", { username });
       socket?.emit("join room", roomName, username);
 
-      const adminMessage = {
-        author: "Admin",
-        content: `Welcome, ${username}!`,
+      const adminMessage: Message = {
+        id: 0,
+        author: "Админ",
+        content: `Добро пожаловать, ${username}!`,
         room: roomName,
+        createdAt: "",
+        updatedAt: "",
       };
       socket?.emit("send message", adminMessage);
-
-      fetch(`http://localhost:8001/api/messages?room=${roomName}`)
-        .then((response) => response.json())
-        .then((data) => setMessages(data.messages))
-        .catch((error) => console.error("Error fetching messages:", error));
     }
   };
 
@@ -116,7 +103,14 @@ const Chat: React.FC = () => {
 
   const handleMessageSend = () => {
     if (socket && message.trim() !== "" && room.trim() !== "") {
-      const newMessage = { author: username, content: message, room: room };
+      const newMessage: Message = {
+        id: 0,
+        author: username,
+        content: message,
+        room: room,
+        createdAt: "",
+        updatedAt: "",
+      };
       socket.emit("send message", newMessage);
       setMessage("");
     }
@@ -142,7 +136,7 @@ const Chat: React.FC = () => {
               </Header>
 
               <MessagesContainer>
-                {messages.map((msg, index) => (
+                {messages?.map((msg, index) => (
                   <Message key={index} mine={msg.author === username}>
                     <Author>{msg.author}:</Author> <Content>{msg.content}</Content>
                   </Message>
@@ -165,7 +159,7 @@ const Chat: React.FC = () => {
               </SendBtnContainer>
             </>
           ) : (
-            <p>Disconnected from server</p>
+            <p>Сервер недоступен. Грусть, печаль, тоска</p>
           )}
         </ChatContainer>
       )}

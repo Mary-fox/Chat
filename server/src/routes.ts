@@ -3,18 +3,12 @@ import { sequelize } from './config/database';
 import { MessageModel } from './models/Message';
 
 import { Express } from 'express';
+import { getAllMessages } from './controllers/messageController';
+const router = Router();
 
-export const startRoutes = (app: Express) => {
-    app.get('/api/messages', async (request, response) => {
-        try {
-            const roomNumber = request.query.room as string;
-            const messages = await MessageModel.findAll({ where: { room: roomNumber } });
-            response.send({ messages });
-        } catch (error) {
-            console.error('Error fetching messages:', error);
-            response.status(500).send('Internal Server Error');
-        }
-    });
+   router.get("/messages", getAllMessages);
 
 
-};
+
+
+export default router;

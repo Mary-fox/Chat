@@ -2,9 +2,10 @@ import express, { Express } from 'express';
 import http from 'http';
 import socketio from 'socket.io';
 import cors from 'cors';
-import { startRoutes } from './routes';
+import router from './routes';
 import { startSocketServer } from './socket';
 import { sequelize } from './config/database';
+import errorHandler from "./middleware/ErrorHandingMiddleware";
 
 
 
@@ -23,8 +24,9 @@ export const startServer = async () => {
         },
         path: '/socket.io',
     });
-
-    startRoutes(app);
+    app.use("/api", router);
+    app.use(errorHandler);
+    
     startSocketServer(io);
 
     try {

@@ -25,7 +25,16 @@ const RoomLogin: React.FC<{ onLogin: (username: string, roomName: string) => voi
         value={roomName}
         onChange={(e) => setRoomName(e.target.value)}
       />
-      <Button onClick={handleLogin}>Зайти в комнату</Button>
+      <Button
+        onClick={handleLogin}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleLogin();
+          }
+        }}
+      >
+        Зайти в комнату
+      </Button>
     </RoomLoginWrapper>
   );
 };
