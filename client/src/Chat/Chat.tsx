@@ -15,8 +15,9 @@ import {
   RoomName,
   SendBtnContainer,
 } from "./Chat.styled";
+import { fetchMessages } from "../http/apiTasks";
 
-interface Message {
+interface MessageItem {
   id: number;
   author: string;
   content: string;
@@ -30,7 +31,7 @@ const Chat: React.FC = () => {
   const [connected, setConnected] = useState<boolean>(false);
   const [username, setUsername] = useState<string>(localStorage.getItem("username") || "");
   const [message, setMessage] = useState<string>("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageItem[]>([]);
   const [room, setRoom] = useState<string>("");
   const [loadedFromDB, setLoadedFromDB] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -48,7 +49,7 @@ const Chat: React.FC = () => {
       setConnected(false);
     });
 
-    newSocket.on("message received", (newMessage: Message) => {
+    newSocket.on("message received", (newMessage: MessageItem) => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
@@ -60,16 +61,20 @@ const Chat: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (messages.length === 0 && room.trim() !== "" && !loadedFromDB) {
-      fetch(`http://localhost:8001/api/messages?room=${room}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setMessages(data);
+    const fetchData = async () => {
+      if (messages.length === 0 && room.trim() !== "" && !loadedFromDB) {
+        try {
           setLoadedFromDB(true);
-        })
-        .catch((error) => console.error("Error fetching messages:", error));
-    }
-  }, [room, loadedFromDB]);
+          const data = await fetchMessages(room);
+          setMessages(data);
+        } catch (error) {
+          console.error("Error fetching messages:", error);
+        }
+      }
+    };
+
+    fetchData();
+  }, [messages.length, room, loadedFromDB]);
 
   const handleLogin = (username: string, roomName: string) => {
     if (username.trim() !== "") {
@@ -79,7 +84,7 @@ const Chat: React.FC = () => {
       socket?.emit("new login", { username });
       socket?.emit("join room", roomName, username);
 
-      const adminMessage: Message = {
+      const adminMessage: MessageItem = {
         id: 0,
         author: "Админ",
         content: `Добро пожаловать, ${username}!`,
@@ -88,6 +93,7 @@ const Chat: React.FC = () => {
         updatedAt: "",
       };
       socket?.emit("send message", adminMessage);
+      setConnected(true);
     }
   };
 
@@ -103,7 +109,7 @@ const Chat: React.FC = () => {
 
   const handleMessageSend = () => {
     if (socket && message.trim() !== "" && room.trim() !== "") {
-      const newMessage: Message = {
+      const newMessage: MessageItem = {
         id: 0,
         author: username,
         content: message,
