@@ -1,11 +1,11 @@
-export interface User {
-    email: string
-    username: string
-  }
-  
-  export interface Message {
-    content: string
-    date: string
-    author: string
-  }
-  
+
+export interface MessageData {
+  author: string;
+  content: string;
+  room: string;
+}
+
+export interface RoomData {
+  room: string;
+  username:string
+}

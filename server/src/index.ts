@@ -1,13 +1,11 @@
+import socketio from 'socket.io';
 import express, { Express } from 'express';
 import http from 'http';
-import socketio from 'socket.io';
 import cors from 'cors';
 import router from './routes';
 import { startSocketServer } from './socket';
 import { sequelize } from './config/database';
 import errorHandler from "./middleware/ErrorHandingMiddleware";
-
-
 
 export const startServer = async () => {
     const app: Express = express();
