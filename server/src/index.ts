@@ -19,7 +19,7 @@ export const startServer = async () => {
     const server = http.createServer(app);
     const io = new socketio.Server(server, {
         cors: {
-            origin: 'http://localhost:3001',
+            origin: 'http://localhost:3000',
             credentials: true,
         },
         path: '/socket.io',

@@ -1,5 +1,5 @@
 import socketio from 'socket.io';
-import { getUniqueUsersOnlineByUsername } from './utilities';
+
 import { MessageModel } from './models/Message';
 
 export const startSocketServer = (io: socketio.Server) => {
@@ -36,13 +36,12 @@ export const startSocketServer = (io: socketio.Server) => {
         
         // Send Message
         socket.on('send message', async (data: any) => {
-            const { author, content, room } = data; // Добавляем room
-
+            const { author, content, room } = data; 
             try {
                 const newMessage = await MessageModel.create({
                     author: data.author,
                     content: data.content,
-                    room: data.room, // Сохраняем информацию о комнате
+                    room: data.room,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 });

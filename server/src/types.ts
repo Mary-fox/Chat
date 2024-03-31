@@ -9,7 +9,3 @@ export interface User {
     author: string
   }
   
-  export interface Session {
-    username: string
-    session: string
-  }

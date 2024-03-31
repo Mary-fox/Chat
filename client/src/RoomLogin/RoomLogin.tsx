@@ -1,14 +1,18 @@
 import React, { useState } from "react";
-import { Input, Button, RoomLoginWrapper } from "./RoomLogin.styled";
+import { Input, Button, RoomLoginWrapper, ErrorText } from "./RoomLogin.styled";
 
 const RoomLogin: React.FC<{ onLogin: (username: string, roomName: string) => void }> = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [roomName, setRoomName] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = () => {
-    if (username.trim() !== "" && roomName.trim() !== "") {
-      onLogin(username, roomName); // Передаем значение комнаты вместе с именем пользователя
+    if (username.trim() === "" || roomName.trim() === "") {
+      setError("Введите логин и название комнаты");
+      return;
     }
+
+    onLogin(username, roomName);
   };
 
   return (
@@ -35,6 +39,7 @@ const RoomLogin: React.FC<{ onLogin: (username: string, roomName: string) => voi
       >
         Зайти в комнату
       </Button>
+      {error && <ErrorText>{error}</ErrorText>}
     </RoomLoginWrapper>
   );
 };

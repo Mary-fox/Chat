@@ -27,3 +27,9 @@ export const RoomLoginWrapper = styled.div`
   max-width: 300px;
   margin: 0 auto;
 `;
+
+export const ErrorText = styled.p`
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+`;
