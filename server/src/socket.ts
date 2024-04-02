@@ -1,6 +1,6 @@
 import socketio, { Socket } from 'socket.io';
 import { MessageModel } from './models/Message';
-import { MessageData, RoomData } from 'types'; // Предположим, что есть интерфейс UserData в вашем файле с типами.
+import { MessageData, RoomData } from 'types';
 
 export const startSocketServer = (io: socketio.Server) => {
     io.on('connection', (socket: Socket) => {
@@ -17,19 +17,19 @@ export const startSocketServer = (io: socketio.Server) => {
             sessionUsername = username;
 
             // Отправка системного сообщения о входе нового пользователя
-            io.emit('system message', { content: `${username} joined the chat`, author: 'Admin' });
+            io.emit('system message', { content: `${username} присоединился к чату. Добро пожаловать`, author: 'Admin' });
         });
         
         socket.on('join room', ({ room, username }: RoomData) => {
             socket.join(room);
             console.log(`User ${username} joined room ${room}`);
+         
         });
 
         // Disconnect
         socket.on('disconnect', () => {
-            console.log(`User disconnected: ${sessionUsername} left the chat`);
-            // Отправка системного сообщения о выходе пользователя
-            io.emit('system message', { content: `${sessionUsername} left the chat`, author: 'Admin' });
+            console.log(`User ${sessionUsername} disconnected: user left the chat`);
+            io.emit('system message', { content: `${sessionUsername} покинул чат. До свидания`, author: 'Admin' });
         });
         
         // Send Message

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import io, { Socket } from "socket.io-client";
-
 import RoomLogin from "../RoomLogin/RoomLogin";
 import {
   Author,
@@ -29,31 +28,22 @@ interface MessageItem {
 
 const Chat: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [connected, setConnected] = useState<boolean>(false);
-  const [username, setUsername] = useState<string>(localStorage.getItem("username") || "");
+  const [userState, setUserState] = useState<{
+    username: string;
+    room: string;
+    connected: boolean;
+  }>({
+    username: localStorage.getItem("username") || "",
+    room: "",
+    connected: false,
+  });
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<MessageItem[]>([]);
-  const [room, setRoom] = useState<string>("");
   const [loadedFromDB, setLoadedFromDB] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const newSocket = io("http://localhost:8001");
-
-    newSocket.on("connect", () => {
-      console.log("Connected to server");
-      setConnected(true);
-    });
-
-    newSocket.on("disconnect", () => {
-      console.log("Disconnected from server");
-      setConnected(false);
-    });
-
-    newSocket.on("message received", (newMessage: MessageItem) => {
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    });
-
     setSocket(newSocket);
 
     return () => {
@@ -62,12 +52,29 @@ const Chat: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!socket) return;
+
+    socket.on("message received", (newMessage: MessageItem) => {
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    });
+    socket.on("system message", (systemMessage: MessageItem) => {
+      setMessages((prevMessages) => [...prevMessages, systemMessage]);
+    });
+
+    return () => {
+      socket.off("system message");
+      socket.off("message received");
+    };
+  }, [socket]);
+
+  useEffect(() => {
     const fetchData = async () => {
-      if (messages.length === 0 && room.trim() !== "" && !loadedFromDB) {
+      if (userState.room.trim() !== "" && !loadedFromDB) {
         try {
           setLoadedFromDB(true);
-          const data = await fetchMessages(room);
-          setMessages(data);
+          const data = await fetchMessages(userState.room);
+          // Добавление новых сообщений к текущему списку
+          setMessages((prevMessages) => [...prevMessages, ...data]);
         } catch (error) {
           console.error("Error fetching messages:", error);
         }
@@ -75,46 +82,34 @@ const Chat: React.FC = () => {
     };
 
     fetchData();
-  }, [messages.length, room, loadedFromDB]);
+  }, [userState.room, loadedFromDB]);
 
   const handleLogin = (username: string, roomName: string) => {
-    if (username.trim() !== "") {
-      setUsername(username);
-      setRoom(roomName);
-
-      socket?.emit("new login", { username });
-      socket?.emit("join room", roomName, username);
-
-      const adminMessage: MessageItem = {
-        id: 0,
-        author: "Админ",
-        content: `Добро пожаловать, ${username}!`,
-        room: roomName,
-        createdAt: "",
-        updatedAt: "",
-      };
-      socket?.emit("send message", adminMessage);
-      setConnected(true);
+    if (username.trim() !== "" && socket) {
+      setUserState({ username, room: roomName, connected: true });
+      socket?.connect();
+      socket.emit("new login", username);
+      socket.emit("join room", { room: roomName, username });
     }
   };
 
   const handleLeaveRoom = () => {
-    localStorage.clear();
-    setUsername("");
-    setRoom("");
-    setMessages([]);
-    setLoadedFromDB(false);
-    setConnected(false);
-    socket?.disconnect();
+    if (userState.username.trim() !== "" && socket) {
+      socket.disconnect();
+      localStorage.clear();
+      setUserState({ username: "", room: "", connected: false });
+      setMessages([]);
+      setLoadedFromDB(false);
+    }
   };
 
   const handleMessageSend = () => {
-    if (socket && message.trim() !== "" && room.trim() !== "") {
+    if (socket && message.trim() !== "" && userState.room.trim() !== "") {
       const newMessage: MessageItem = {
         id: 0,
-        author: username,
+        author: userState.username,
         content: message,
-        room: room,
+        room: userState.room,
         createdAt: "",
         updatedAt: "",
       };
@@ -131,21 +126,27 @@ const Chat: React.FC = () => {
 
   return (
     <Container>
-      {!username ? (
+      {!userState.username ? (
         <RoomLogin onLogin={handleLogin} />
       ) : (
         <ChatContainer>
-          {connected ? (
+          {userState.connected ? (
             <>
               <Header>
-                <RoomName>Комната: {room}</RoomName>
+                <RoomName>Комната: {userState.room}</RoomName>
                 <LogoutButton onClick={handleLeaveRoom}>Выход</LogoutButton>
               </Header>
 
               <MessagesContainer>
                 {messages?.map((msg, index) => (
-                  <Message key={index} mine={msg.author === username}>
-                    <Author>{msg.author}:</Author> <Content>{msg.content}</Content>
+                  <Message key={index} mine={msg.author === userState.username}>
+                    {msg.author === "Admin" ? (
+                      <span style={{ fontStyle: "italic" }}>{msg.content}</span>
+                    ) : (
+                      <>
+                        <Author>{msg.author}:</Author> <Content>{msg.content}</Content>
+                      </>
+                    )}
                   </Message>
                 ))}
                 <div ref={messagesEndRef} />
