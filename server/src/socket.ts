@@ -29,7 +29,7 @@ export const startSocketServer = (io: socketio.Server) => {
         // Disconnect
         socket.on('disconnect', () => {
             console.log(`User ${sessionUsername} disconnected: user left the chat`);
-            io.emit('system message', { content: `${sessionUsername} покинул чат. До свидания`, author: 'Admin' });
+            io.emit('system message', { content: `${sessionUsername} покинул чат.`, author: 'Admin' });
         });
         
         // Send Message
